@@ -37,8 +37,7 @@ ADD                 runKairos.sh /usr/bin/run_kairos.sh
 RUN                 chmod +x /usr/bin/run_kairos.sh
 
 # Kairos ports
-EXPOSE              8080
-EXPOSE              4242
+EXPOSE              8080 4242
 
 # Run kairosdb in foreground on boot
 CMD                [ "/usr/bin/run_kairos.sh" ]
