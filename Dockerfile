@@ -17,28 +17,28 @@
 # Sample Usage:
 #                  docker run -P -e "CASS_HOSTS=192.168.1.63:9160" -e "REPFACTOR=1" stakater/kairosdb
 
-FROM 				stakater/java:oracle-8
+FROM                stakater/java8-alpine
 
-MAINTAINER 			Rasheed Amir <rasheed@aurorasolutions.io>
+MAINTAINER          Rasheed Amir <rasheed@aurorasolutions.io>
 
 ARG                 KAIROSDB_VERSION
 
-RUN                             echo "going to use kairosdb http port $PORT_TELNET"
+RUN                 apk add --update --no-cache bash gawk sed grep bc coreutils gettext curl && rm -rf /var/cache/apk/*
+RUN                 sed -i -e "s/bin\/ash/bin\/bash/" /etc/passwd
 
-# install gettext for envsubst
-RUN 				apt-get update
-RUN 				apt-get install -y gettext-base
+# Install Kairosdb
+RUN                 wget https://github.com/kairosdb/kairosdb/releases/download/v${KAIROSDB_VERSION}/kairosdb-${KAIROSDB_VERSION}-1.tar.gz
+RUN                 tar -xzf kairosdb-${KAIROSDB_VERSION}-1.tar.gz -C /opt \
+                    && chown -R root:root /opt/kairosdb
 
-# Install KAIROSDB
-RUN 				wget -O /var/cache/kairosdb_${KAIROSDB_VERSION}-1_all.deb \ 
-					https://github.com/kairosdb/kairosdb/releases/download/v${KAIROSDB_VERSION}/kairosdb_${KAIROSDB_VERSION}-1_all.deb
+ADD                 kairosdb.properties /tmp/kairosdb.properties
+ADD                 runKairos.sh /usr/bin/run_kairos.sh
 
-RUN 				dpkg -i /var/cache/kairosdb_${KAIROSDB_VERSION}-1_all.deb
+RUN                 chmod +x /usr/bin/run_kairos.sh
 
-ADD 				kairosdb.properties /tmp/kairosdb.properties
+# Kairos ports
+EXPOSE              8080
+EXPOSE              4242
 
-ADD 				runKairos.sh /usr/local/sbin/run_kairosdb.sh
-
-ADD 				logback.xml /opt/kairosdb/conf/logging/logback.xml
-
-ENTRYPOINT 			["/usr/local/sbin/run_kairosdb.sh"]
+# Run kairosdb in foreground on boot
+CMD                [ "/usr/bin/run_kairos.sh" ]
